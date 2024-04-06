@@ -12,7 +12,7 @@ setup(
     url='https://github.com/BamCorp/bambot',
     packages=find_packages(),
     install_requires=[
-        # deps
+        "requests"
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
