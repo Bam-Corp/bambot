@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='bambot',
-    version='0.1.0',
+    version='0.2.0',
     author='Bam Corp.',
     author_email='spencer@bam.bot',
     description='A Python package for interfacing with Bam foundational AI models.',
