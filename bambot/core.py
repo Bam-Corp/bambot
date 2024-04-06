@@ -57,7 +57,7 @@ class Bam:
             if status in ['SUCCESS', 'FAILURE']:
                 return data
             elif status == 'PENDING':
-                time.sleep(0.5)
+                time.sleep(0.25)
             else:
                 raise TaskStatusError(f"Unexpected task status: {status}")
 
