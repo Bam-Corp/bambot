@@ -49,12 +49,18 @@ class Bam:
             response = requests.get(f"{self.base_url}{task_id}/", headers=headers)
             if response.status_code == 401:
                 raise AuthenticationError("Invalid API key")
-            elif response.status_code != 200:
-                raise TaskStatusError(f"Error fetching task status: {response.text}")
-            status: str = response.json().get('status')
+            elif response.status_code not in [200, 202]:
+                raise TaskStatusError(f"Unexpected error fetching task status: {response.text}")
+            
+            data = response.json()
+            status = data.get('status')
             if status in ['SUCCESS', 'FAILURE']:
-                return response.json()
-            time.sleep(0.5)
+                return data
+            elif status == 'PENDING':
+                time.sleep(0.5)
+            else:
+                raise TaskStatusError(f"Unexpected task status: {status}")
+
 
     def run(self, task: str, model: Optional[str] = None, data: Optional[str] = None, 
             mission: Optional[str] = None, objectives: Optional[Any] = None, 
