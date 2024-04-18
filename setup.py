@@ -3,19 +3,20 @@ from setuptools import setup, find_packages
 
 setup(
     name='bambot',
-    version='0.2.1',
+    version='0.3.0',
     author='Bam Corp.',
     author_email='spencer@bam.bot',
-    description='A Python package for interfacing with Bam foundational AI models.',
+    description='A Python package for interfacing with Bam data storage.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/BamCorp/bambot',
     packages=find_packages(),
     install_requires=[
-        "requests"
+        "requests",
+        "tqdm"
     ],
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'License :: OSI Approved :: MIT License',
