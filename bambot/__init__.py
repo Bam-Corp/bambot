@@ -1,1 +1,1 @@
-from .core import Bam
+from .core import BamClient
