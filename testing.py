@@ -1,4 +1,4 @@
-# quickstart.py
+# testing.py
 from bambot import BamClient
 
 # Initialize the Bam client with your API key
