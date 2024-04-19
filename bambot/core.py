@@ -1,7 +1,7 @@
 # bambot/core.py
 import os
 import requests
-from typing import List
+from typing import List, Dict
 from tqdm import tqdm
 
 class BamClient:
@@ -56,3 +56,17 @@ class BamClient:
                 print(f"- {file_path}")
 
         print(f"\nSuccessfully uploaded {success_count} out of {total_files} documents.")
+
+    def search_documents(self, query: str) -> List[Dict[str, str]]:
+        """Search for documents based on a natural language query."""
+        url = f"{self.base_url}/search"
+        headers = {'Authorization': f'Bearer {self.api_key}'}
+        data = {'query': query}
+
+        try:
+            response = requests.post(url, headers=headers, json=data)
+            response.raise_for_status()
+            return response.json()['results']
+        except Exception as e:
+            print(f"Error searching documents: {str(e)}")
+            return []
