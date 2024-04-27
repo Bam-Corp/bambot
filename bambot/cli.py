@@ -69,7 +69,7 @@ def build(bot_file):
         echo_info("Generating deployment files...")
         copy_template(env, "Dockerfile.j2", os.path.join(bot_dir, "Dockerfile"))
         copy_template(env, "Procfile.j2", os.path.join(bot_dir, "Procfile"))
-        copy_template(env, "README.md.j2", os.path.join(bot_dir, "README.md"))
+        copy_template(env, "agent_readme.md.j2", os.path.join(bot_dir, "agent_readme.md"))
 
         echo_info("Building Docker image...")
         with tqdm(total=100, unit="B", unit_scale=True, unit_divisor=1024, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]") as pbar:

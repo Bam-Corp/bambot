@@ -101,7 +101,7 @@ def clean():
     files_to_remove = [
         "Dockerfile",
         "Procfile",
-        "README.md",
+        "agent_readme.md",
         "output.zip",
     ]
 
