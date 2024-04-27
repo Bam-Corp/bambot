@@ -1,6 +1,6 @@
 # Bambot
 
-Bambot is a Python package for interfacing with Bam foundational AI models which simplifies the process of integrating advanced data capabilities into your apps.
+Bambot is a container framework for deploying AI agents
 
 ## Installation
 
