@@ -1,3 +1,4 @@
+# bambot/cli.py
 import os
 import click
 import shutil
@@ -72,10 +73,6 @@ def build(bot_file):
         copy_template(env, "agent_readme.md.j2", os.path.join(bot_dir, "agent_readme.md"))
 
         echo_info("Building Docker image...")
-        with tqdm(total=100, unit="B", unit_scale=True, unit_divisor=1024, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]") as pbar:
-            for _ in pbar:
-                pbar.set_postfix(operation="Building Docker image", refresh=False)
-                pbar.update(1)
         docker_manager.build_image()
 
         echo_info("Deployment files generated successfully.")
@@ -106,19 +103,11 @@ def run(bot_file):
 
     try:
         print_bam_ascii_art()
-        echo_info("Running Docker container...")
-        with tqdm(total=100, unit="B", unit_scale=True, unit_divisor=1024, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]") as pbar:
-            for _ in pbar:
-                pbar.set_postfix(operation="Running Docker container", refresh=False)
-                pbar.update(1)
+        echo_info("Running Bam container...")
         container_id = docker_manager.run_container(bot_path)
 
         log_file = f"/app/output/bot_{container_id}.log"
         echo_info("Processing logs...")
-        with tqdm(total=100, unit="B", unit_scale=True, unit_divisor=1024, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]") as pbar:
-            for _ in pbar:
-                pbar.set_postfix(operation="Processing logs", refresh=False)
-                pbar.update(1)
         log_manager.process_logs(log_file)
 
         echo_info("AI agent execution completed successfully.")
