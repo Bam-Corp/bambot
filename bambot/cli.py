@@ -29,7 +29,8 @@ def cli():
 
 @cli.command()
 @click.option("--bot-file", "-b", default="bot.py", help="Name of the bot file (e.g., my_bot.py).")
-def build(bot_file):
+@click.option("--readme-file", "-r", default="agent_readme.md", help="Name of the generated README file (default: agent_readme.md).")
+def build(bot_file, readme_file):
     """Build and generate deployment files for an AI agent."""
     bot_dir = os.getcwd()
     bot_path = os.path.join(bot_dir, bot_file)
@@ -42,7 +43,7 @@ def build(bot_file):
         echo_info("Generating deployment files...")
         copy_template(env, "Dockerfile.j2", os.path.join(bot_dir, "Dockerfile"))
         copy_template(env, "Procfile.j2", os.path.join(bot_dir, "Procfile"))
-        copy_template(env, "README.md.j2", os.path.join(bot_dir, "README.md"))
+        copy_template(env, "agent_readme.md.j2", os.path.join(bot_dir, readme_file))
         echo_info("Deployment files generated successfully.")
     except Exception as e:
         echo_error(str(e))
@@ -105,7 +106,7 @@ def clean():
     files_to_remove = [
         "Dockerfile",
         "Procfile",
-        "README.md",
+        "agent_readme.md",
         "output.zip",
     ]
 
