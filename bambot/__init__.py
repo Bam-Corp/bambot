@@ -1,3 +1,4 @@
+# bambot/__init__.py
 import os
 import click
 import shutil
