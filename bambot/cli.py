@@ -4,7 +4,7 @@ from jinja2 import Environment, PackageLoader
 from tqdm import tqdm
 from .docker_utils import DockerManager
 from .log_utils import LogManager
-from .utils import copy_template, generate_random_string
+from .utils import copy_template
 
 env = Environment(loader=PackageLoader("bambot", "templates"))
 
