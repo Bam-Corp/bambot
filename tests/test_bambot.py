@@ -18,7 +18,7 @@ def test_build(runner):
         assert "Deployment files generated successfully." in result.output
         assert "Dockerfile" in os.listdir()
         assert "Procfile" in os.listdir()
-        assert "README.md" in os.listdir()
+        assert "agent_readme.md" in os.listdir()
 
 def test_run_without_docker(runner):
     result = runner.invoke(cli, ["run"])
@@ -31,8 +31,8 @@ def test_clean(runner):
             f.write("# Test Dockerfile")
         with open("Procfile", "w") as f:
             f.write("# Test Procfile")
-        with open("README.md", "w") as f:
-            f.write("# Test README")
+        with open("agent_readme.md", "w") as f:
+            f.write("# Test agent_readme")
         os.mkdir("output.zip")
 
         result = runner.invoke(cli, ["clean"])
@@ -40,5 +40,5 @@ def test_clean(runner):
         assert "Clean up completed successfully." in result.output
         assert not os.path.exists("Dockerfile")
         assert not os.path.exists("Procfile")
-        assert not os.path.exists("README.md")
+        assert not os.path.exists("agent_readme.md")
         assert not os.path.exists("output.zip")
