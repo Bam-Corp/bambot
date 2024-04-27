@@ -1,3 +1,4 @@
+# bambot/cli.py
 import os
 import click
 import shutil
@@ -39,11 +40,36 @@ def build(bot_file, readme_file):
         echo_error(f"{bot_file} not found in the current directory.")
         return
 
+    docker_manager = DockerManager()
+
+    if not docker_manager.is_docker_running():
+        echo_error("Docker daemon is not running.")
+        echo_warning("Please start the Docker daemon and try again.")
+        echo_info("You can check the status of the Docker daemon using the following command:")
+        echo_info("  docker info")
+        echo_info("If Docker is not installed, you can download it from https://www.docker.com/get-started")
+        return
+
     try:
+        echo_info("Cleaning up unused Docker resources...")
+        confirm_cleanup = click.confirm("This operation will remove unused Docker resources (images, containers, networks, and build cache) to free up disk space. If you choose 'No', this step will be skipped. Proceed with cleanup?", default=False)
+        if confirm_cleanup:
+            docker_manager.cleanup()
+        else:
+            echo_info("Skipping Docker cleanup operation.")
+
         echo_info("Generating deployment files...")
         copy_template(env, "Dockerfile.j2", os.path.join(bot_dir, "Dockerfile"))
         copy_template(env, "Procfile.j2", os.path.join(bot_dir, "Procfile"))
         copy_template(env, "agent_readme.md.j2", os.path.join(bot_dir, readme_file))
+
+        echo_info("Building Docker image...")
+        with tqdm(total=100, unit="B", unit_scale=True, unit_divisor=1024, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]") as pbar:
+            for _ in pbar:
+                pbar.set_postfix(operation="Building Docker image", refresh=False)
+                pbar.update(1)
+        docker_manager.build_image()
+
         echo_info("Deployment files generated successfully.")
     except Exception as e:
         echo_error(str(e))
@@ -62,22 +88,7 @@ def run(bot_file):
     docker_manager = DockerManager()
     log_manager = LogManager()
 
-    if not docker_manager.is_docker_running():
-        echo_error("Docker daemon is not running.")
-        echo_warning("Please start the Docker daemon and try again.")
-        echo_info("You can check the status of the Docker daemon using the following command:")
-        echo_info("  docker info")
-        echo_info("If Docker is not installed, you can download it from https://www.docker.com/get-started")
-        return
-
     try:
-        echo_info("Building Docker image...")
-        with tqdm(total=100, unit="B", unit_scale=True, unit_divisor=1024, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]") as pbar:
-            for _ in pbar:
-                pbar.set_postfix(operation="Building Docker image", refresh=False)
-                pbar.update(1)
-        docker_manager.build_image()
-
         echo_info("Running Docker container...")
         with tqdm(total=100, unit="B", unit_scale=True, unit_divisor=1024, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]") as pbar:
             for _ in pbar:
@@ -96,8 +107,6 @@ def run(bot_file):
         echo_info("AI agent execution completed successfully.")
     except Exception as e:
         echo_error(str(e))
-    finally:
-        docker_manager.cleanup()
 
 @cli.command()
 def clean():
