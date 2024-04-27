@@ -1,7 +1,7 @@
 # bambot/docker_utils.py
 import os
 import subprocess
-
+import click
 
 class DockerManager:
     def __init__(self):
@@ -40,3 +40,9 @@ class DockerManager:
             raise RuntimeError(f"Error running Docker container: {e}")
 
         return os.path.splitext(os.path.basename(bot_file))[0]
+
+    def cleanup(self):
+        try:
+            subprocess.run(["docker", "system", "prune", "-f"], check=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Error cleaning up Docker resources: {e}")

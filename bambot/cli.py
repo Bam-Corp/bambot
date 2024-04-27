@@ -1,4 +1,3 @@
-# bambot/cli.py
 import os
 import click
 import shutil
@@ -19,6 +18,16 @@ def echo_warning(message):
 def echo_info(message):
     click.echo(click.style(f"Info: {message}", fg="green"))
 
+def print_bam_ascii_art():
+    bam_ascii_art = r"""
+   _____   ____  ____   ____
+  / ___/  / __ \/ __ \ / __ \
+  \__ \  / /_/ / /_/ / /_/ /
+ ___/ /  \____/ ____/ ____/
+/____/      /_/     /_/
+"""
+    click.echo(click.style(bam_ascii_art, fg="light_green"))
+
 @click.group()
 def cli():
     """
@@ -30,8 +39,7 @@ def cli():
 
 @cli.command()
 @click.option("--bot-file", "-b", default="bot.py", help="Name of the bot file (e.g., my_bot.py).")
-@click.option("--readme-file", "-r", default="agent_readme.md", help="Name of the generated README file (default: agent_readme.md).")
-def build(bot_file, readme_file):
+def build(bot_file):
     """Build and generate deployment files for an AI agent."""
     bot_dir = os.getcwd()
     bot_path = os.path.join(bot_dir, bot_file)
@@ -52,7 +60,7 @@ def build(bot_file, readme_file):
 
     try:
         echo_info("Cleaning up unused Docker resources...")
-        confirm_cleanup = click.confirm("This operation will remove unused Docker resources (images, containers, networks, and build cache) to free up disk space. If you choose 'No', this step will be skipped. Proceed with cleanup?", default=False)
+        confirm_cleanup = click.confirm("Remove unused Docker resources (e.g., containers and images)? Skip this step with 'No'", default=False)
         if confirm_cleanup:
             docker_manager.cleanup()
         else:
@@ -61,7 +69,7 @@ def build(bot_file, readme_file):
         echo_info("Generating deployment files...")
         copy_template(env, "Dockerfile.j2", os.path.join(bot_dir, "Dockerfile"))
         copy_template(env, "Procfile.j2", os.path.join(bot_dir, "Procfile"))
-        copy_template(env, "agent_readme.md.j2", os.path.join(bot_dir, readme_file))
+        copy_template(env, "README.md.j2", os.path.join(bot_dir, "README.md"))
 
         echo_info("Building Docker image...")
         with tqdm(total=100, unit="B", unit_scale=True, unit_divisor=1024, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]") as pbar:
@@ -88,7 +96,16 @@ def run(bot_file):
     docker_manager = DockerManager()
     log_manager = LogManager()
 
+    if not docker_manager.is_docker_running():
+        echo_error("Docker daemon is not running.")
+        echo_warning("Please start the Docker daemon and try again.")
+        echo_info("You can check the status of the Docker daemon using the following command:")
+        echo_info("  docker info")
+        echo_info("If Docker is not installed, you can download it from https://www.docker.com/get-started")
+        return
+
     try:
+        print_bam_ascii_art()
         echo_info("Running Docker container...")
         with tqdm(total=100, unit="B", unit_scale=True, unit_divisor=1024, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]") as pbar:
             for _ in pbar:
