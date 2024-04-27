@@ -1,6 +1,7 @@
+# bambot/docker_utils.py
 import os
 import subprocess
-import click  # Import the click library
+import click
 
 class DockerManager:
     def __init__(self):
