@@ -60,23 +60,23 @@ def build(bot_file):
         return
 
     try:
-        echo_info("Cleaning up unused Docker resources...")
-        confirm_cleanup = click.confirm("Remove unused Docker resources (e.g., containers and images)? Skip this step with 'No'", default=False)
+        echo_info("Cleaning up unused containers and images...")
+        confirm_cleanup = click.confirm("Remove unused containers and images? Skip this step with 'No'", default=False)
         if confirm_cleanup:
             docker_manager.cleanup()
         else:
-            echo_info("Skipping Docker cleanup operation.")
+            echo_info("Skipping cleanup operation.")
 
         echo_info("Generating deployment files...")
         copy_template(env, "Dockerfile.j2", os.path.join(bot_dir, "Dockerfile"))
         copy_template(env, "Procfile.j2", os.path.join(bot_dir, "Procfile"))
         copy_template(env, "agent_readme.md.j2", os.path.join(bot_dir, "agent_readme.md"))
 
-        echo_info("Building Docker image...")
+        echo_info("Building Bam container image...")
         docker_manager.build_image()
 
-        echo_info("Deployment process completed successfully!")
-        echo_info("You can now run the 'bam run' command to start your AI agent.")
+        echo_info("Deployment files prepared successfully!")
+        echo_info("You can now run the 'bam run' command to start your AI agent container.")
     except Exception as e:
         echo_error(str(e))
 
