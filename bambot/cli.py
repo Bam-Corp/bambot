@@ -31,13 +31,72 @@ def cli():
 @click.option("--bot-file", "-b", default="bot.py", help="Name of the bot file (e.g., my_bot.py).")
 def build(bot_file):
     """Build and generate deployment files for an AI agent."""
-    # ... (existing build command code) ...
+    bot_dir = os.getcwd()
+    bot_path = os.path.join(bot_dir, bot_file)
+
+    if not os.path.exists(bot_path):
+        echo_error(f"{bot_file} not found in the current directory.")
+        return
+
+    try:
+        echo_info("Generating deployment files...")
+        copy_template(env, "Dockerfile.j2", os.path.join(bot_dir, "Dockerfile"))
+        copy_template(env, "Procfile.j2", os.path.join(bot_dir, "Procfile"))
+        copy_template(env, "README.md.j2", os.path.join(bot_dir, "README.md"))
+        echo_info("Deployment files generated successfully.")
+    except Exception as e:
+        echo_error(str(e))
 
 @cli.command()
 @click.option("--bot-file", "-b", default="bot.py", help="Name of the bot file (e.g., my_bot.py).")
 def run(bot_file):
     """Run an AI agent locally."""
-    # ... (existing run command code) ...
+    bot_dir = os.getcwd()
+    bot_path = os.path.join(bot_dir, bot_file)
+
+    if not os.path.exists(bot_path):
+        echo_error(f"{bot_file} not found in the current directory.")
+        return
+
+    docker_manager = DockerManager()
+    log_manager = LogManager()
+
+    if not docker_manager.is_docker_running():
+        echo_error("Docker daemon is not running.")
+        echo_warning("Please start the Docker daemon and try again.")
+        echo_info("You can check the status of the Docker daemon using the following command:")
+        echo_info("  docker info")
+        echo_info("If Docker is not installed, you can download it from https://www.docker.com/get-started")
+        return
+
+    try:
+        echo_info("Building Docker image...")
+        with tqdm(total=100, unit="B", unit_scale=True, unit_divisor=1024, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]") as pbar:
+            for _ in pbar:
+                pbar.set_postfix(operation="Building Docker image", refresh=False)
+                pbar.update(1)
+        docker_manager.build_image()
+
+        echo_info("Running Docker container...")
+        with tqdm(total=100, unit="B", unit_scale=True, unit_divisor=1024, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]") as pbar:
+            for _ in pbar:
+                pbar.set_postfix(operation="Running Docker container", refresh=False)
+                pbar.update(1)
+        container_id = docker_manager.run_container(bot_path)
+
+        log_file = f"/app/output/bot_{container_id}.log"
+        echo_info("Processing logs...")
+        with tqdm(total=100, unit="B", unit_scale=True, unit_divisor=1024, bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]") as pbar:
+            for _ in pbar:
+                pbar.set_postfix(operation="Processing logs", refresh=False)
+                pbar.update(1)
+        log_manager.process_logs(log_file)
+
+        echo_info("AI agent execution completed successfully.")
+    except Exception as e:
+        echo_error(str(e))
+    finally:
+        docker_manager.cleanup()
 
 @cli.command()
 def clean():
