@@ -27,7 +27,7 @@ def print_bam_ascii_art():
  ___/ /  \____/ ____/ ____/
 /____/      /_/     /_/
 """
-    click.echo(click.style(bam_ascii_art, fg="light_green"))
+    click.echo(click.style(bam_ascii_art, fg="green"))
 
 @click.group()
 def cli():
@@ -75,7 +75,8 @@ def build(bot_file):
         echo_info("Building Docker image...")
         docker_manager.build_image()
 
-        echo_info("Deployment files generated successfully.")
+        echo_info("Deployment process completed successfully!")
+        echo_info("You can now run the 'bam run' command to start your AI agent.")
     except Exception as e:
         echo_error(str(e))
 
