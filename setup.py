@@ -6,10 +6,10 @@ with open("README.md", "r") as fh:
 
 setup(
     name="bambot",
-    version="0.4.0",
+    version="0.3.0",
     author="Bam Corp",
     author_email="spencer@bam.bot",
-    description="A framework for deploying AI agents as Docker containers",
+    description="Lightweight containers for AI agents",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/BamCorp/bambot",
