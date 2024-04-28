@@ -1,30 +1,30 @@
-# bambot/logger.py
 import logging
+import os
 import sys
-import datetime
+from logging.handlers import RotatingFileHandler
+
 
 class Logger:
-    def __init__(self):
+    def __init__(self, log_file_path, max_bytes=1024 * 1024, backup_count=5):
+        os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
         self.logger = logging.getLogger("bam-logger")
         self.logger.setLevel(logging.INFO)
         self.formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
-    def start(self):
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_file = f"/app/output/bot_{timestamp}.log"
-        self.file_handler = logging.FileHandler(log_file)
+        self.file_handler = RotatingFileHandler(log_file_path, maxBytes=max_bytes, backupCount=backup_count)
         self.file_handler.setFormatter(self.formatter)
         self.logger.addHandler(self.file_handler)
+
         self.console_handler = logging.StreamHandler(sys.stdout)
         self.console_handler.setFormatter(self.formatter)
         self.logger.addHandler(self.console_handler)
-        self.logger.info("Bot execution started.")
 
     def write(self, message):
         self.logger.info(message)
+        for handler in self.logger.handlers:
+            handler.flush()
 
     def stop(self):
-        self.logger.info("Bot execution completed.")
-        self.logger.removeHandler(self.file_handler)
-        self.logger.removeHandler(self.console_handler)
-        self.file_handler.close()
+        for handler in self.logger.handlers:
+            handler.close()
+            self.logger.removeHandler(handler)

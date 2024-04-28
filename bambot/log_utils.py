@@ -1,18 +1,13 @@
-# bambot/log_utils.py
 import os
 from .logger import Logger
 
 class LogManager:
-    def __init__(self):
-        self.logger = Logger()
+    def __init__(self, log_file_path):
+        self.logger = Logger(log_file_path)
 
-    def process_logs(self, log_file):
-        if not os.path.exists(log_file):
-            raise FileNotFoundError(f"Log file not found: {log_file}")
-
-        self.logger.start()
+    def process_logs(self):
         try:
-            with open(log_file, "r") as file:
+            with open(self.logger.file_handler.baseFilename, "r") as file:
                 for line in file:
                     self.logger.write(line.strip())
         except Exception as e:

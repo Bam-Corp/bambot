@@ -1,7 +1,5 @@
-# bambot/docker_utils.py
 import os
 import subprocess
-import click
 
 class DockerManager:
     def __init__(self):
@@ -22,25 +20,31 @@ class DockerManager:
             raise RuntimeError(f"Error building Bam container image: {e}")
 
     def run_container(self, bot_file):
-        container_name = f"{self.container_name_prefix}{os.path.splitext(os.path.basename(bot_file))[0]}"
-        os.makedirs(self.output_dir, exist_ok=True)
-
+        container_name = os.path.splitext(os.path.basename(bot_file))[0]
+        log_dir = os.path.join(os.getcwd(), "logs")
+        os.makedirs(log_dir, exist_ok=True)
         try:
             subprocess.run(
                 [
-                    "docker", "run", "--rm", "--name", container_name,
-                    "-v", f"{os.path.abspath(self.output_dir)}:/app/output",
-                    "--cap-drop=ALL", "--security-opt=no-new-privileges",
-                    "--memory=256m", "--cpus=1",
+                    "docker",
+                    "run",
+                    "--rm",
+                    "--name", f"{self.container_name_prefix}{container_name}",
+                    "-v", f"{os.path.join(os.getcwd(), 'output')}:/app/output",
+                    "-v", f"{log_dir}:/app/logs",
                     "-v", f"{os.path.abspath(bot_file)}:/app/{os.path.basename(bot_file)}",
+                    "--memory=256m",
+                    "--memory-swap=256m",
+                    "--cpus=1",
+                    "--cap-drop=ALL",
+                    "--security-opt=no-new-privileges",
                     "bam-agent"
                 ],
                 check=True,
             )
         except subprocess.CalledProcessError as e:
             raise RuntimeError(f"Error running Bam container: {e}")
-
-        return os.path.splitext(os.path.basename(bot_file))[0]
+        return container_name
 
     def cleanup(self):
         try:
