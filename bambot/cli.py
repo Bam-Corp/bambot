@@ -6,6 +6,10 @@ from jinja2 import Environment, PackageLoader
 from .docker_utils import DockerManager
 from .log_utils import LogManager
 from .utils import copy_template
+import subprocess
+import signal
+import sys
+import threading
 
 env = Environment(loader=PackageLoader("bambot", "templates"))
 
@@ -40,7 +44,8 @@ def cli():
 
 @cli.command()
 @click.option("--bot-file", "-b", default="bot.py", help="Name of the bot file (e.g., my_bot.py).")
-def build(bot_file):
+@click.option("--include-dashboard", "-d", is_flag=True, help="Include the Streamlit dashboard in the Docker image.")
+def build(bot_file, include_dashboard):
     """Build and generate deployment files for an AI agent."""
     bot_dir = os.getcwd()
     bot_path = os.path.join(bot_dir, bot_file)
@@ -68,12 +73,23 @@ def build(bot_file):
             echo_info("Skipping cleanup operation.")
 
         echo_info("Generating deployment files...")
-        copy_template(env, "Dockerfile.j2", os.path.join(bot_dir, "Dockerfile"))
+        if include_dashboard:
+            copy_template(env, "Dockerfile.dashboard.j2", os.path.join(bot_dir, "Dockerfile"))
+            include_dashboard_value = "true"
+        else:
+            copy_template(env, "Dockerfile.lightweight.j2", os.path.join(bot_dir, "Dockerfile"))
+            include_dashboard_value = "false"
         copy_template(env, "Procfile.j2", os.path.join(bot_dir, "Procfile"))
         copy_template(env, "agent_readme.md.j2", os.path.join(bot_dir, "agent_readme.md"))
+        copy_template(env, "run.sh.j2", os.path.join(bot_dir, "run.sh"), include_dashboard=include_dashboard_value)
+
+        # Create a configuration file with the include_dashboard value
+        config_file_path = os.path.join(bot_dir, "bambot.config")
+        with open(config_file_path, "w") as config_file:
+            config_file.write(f"include_dashboard={include_dashboard}")
 
         echo_info("Building Bam container image...")
-        docker_manager.build_image()
+        docker_manager.build_image(include_dashboard)
 
         echo_info("Deployment files prepared successfully!")
         echo_info("You can now run the 'bam run' command to start your AI agent container.")
@@ -103,19 +119,51 @@ def run(bot_file):
 
     try:
         print_bam_ascii_art()
-        echo_info("Running Bam container...")
+        echo_info("Running container...")
         container_name = docker_manager.run_container(bot_path)
 
-        log_file = f"{container_name}.log"
-        log_file_path = os.path.join("output", log_file)
-        log_manager = LogManager(log_file_path)
+        log_manager = LogManager()
 
-        echo_info("Processing logs...")
-        log_manager.process_logs()
+        # Read the include_dashboard value from the configuration file
+        config_file_path = os.path.join(bot_dir, "bambot.config")
+        with open(config_file_path, "r") as config_file:
+            config_lines = config_file.readlines()
 
-        echo_info("AI agent execution completed successfully.")
+        include_dashboard = False
+        for line in config_lines:
+            if line.startswith("include_dashboard="):
+                include_dashboard = line.split("=")[1].strip() == "true"
+                break
+
+        # Check if the Streamlit dashboard is included
+        if include_dashboard:
+            echo_info("Streamlit dashboard is available at http://localhost:8501")
+            echo_info("Press Ctrl+C to stop the AI agent and Streamlit dashboard.")
+
+        # Run the log manager in a separate thread to simulate real-time log generation
+        log_thread = threading.Thread(target=log_manager.process_logs)
+        log_thread.start()
+
+        # Wait for the user to press Ctrl+C to stop the container
+        try:
+            signal.pause()
+        except KeyboardInterrupt:
+            echo_info("Stopping the AI agent...")
+
+        # Terminate the log thread
+        log_thread.join(timeout=5)
+
+        echo_info("AI agent execution completed.")
     except Exception as e:
         echo_error(str(e))
+
+
+def run_streamlit_app():
+    try:
+        os.chdir("bambot")  # Change to the bambot directory
+        subprocess.run(["python", "-m", "streamlit", "run", "dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"])
+    except Exception as e:
+        echo_error(f"Error running Streamlit app: {e}")
 
 @cli.command()
 def clean():
@@ -125,8 +173,8 @@ def clean():
         "Dockerfile",
         "Procfile",
         "agent_readme.md",
-        "output.zip",
-        "output",
+        "run.sh",
+        "bambot.config",
     ]
 
     for file_name in files_to_remove:

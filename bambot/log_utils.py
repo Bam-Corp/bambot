@@ -1,16 +1,19 @@
-import os
+# bambot/log_utils.py
+from .logger import Logger
+
 from .logger import Logger
 
 class LogManager:
-    def __init__(self, log_file_path):
-        self.logger = Logger(log_file_path)
+    def __init__(self):
+        self.logger = Logger()
 
     def process_logs(self):
+        # Simulated internal message handling
         try:
-            with open(self.logger.file_handler.baseFilename, "r") as file:
-                for line in file:
-                    self.logger.write(line.strip())
+            # TODO: could add more complex log handling if needed.
+            pass
         except Exception as e:
-            self.logger.write(f"Error processing logs: {e}")
+            self.logger.error(f"Error processing logs: {e}")
         finally:
             self.logger.stop()
+

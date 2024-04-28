@@ -1,30 +1,23 @@
+# logger.py
 import logging
-import os
 import sys
-from logging.handlers import RotatingFileHandler
-
 
 class Logger:
-    def __init__(self, log_file_path, max_bytes=1024 * 1024, backup_count=5):
-        os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
+    def __init__(self):
         self.logger = logging.getLogger("bam-logger")
         self.logger.setLevel(logging.INFO)
-        self.formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", datefmt='%Y-%m-%d %H:%M:%S')
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        self.logger.addHandler(console_handler)
 
-        self.file_handler = RotatingFileHandler(log_file_path, maxBytes=max_bytes, backupCount=backup_count)
-        self.file_handler.setFormatter(self.formatter)
-        self.logger.addHandler(self.file_handler)
-
-        self.console_handler = logging.StreamHandler(sys.stdout)
-        self.console_handler.setFormatter(self.formatter)
-        self.logger.addHandler(self.console_handler)
-
-    def write(self, message):
+    def info(self, message):
         self.logger.info(message)
-        for handler in self.logger.handlers:
-            handler.flush()
+
+    def error(self, message):
+        self.logger.error(message)
 
     def stop(self):
         for handler in self.logger.handlers:
             handler.close()
-            self.logger.removeHandler(handler)
+        self.logger.removeHandler(handler)

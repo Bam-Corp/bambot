@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Create the /app/logs directory if it doesn't exist
+mkdir -p /app/logs
+
+# Start the Streamlit server in the background
+python -m streamlit run bambot/dashboard.py --server.port=8501 --server.address=0.0.0.0 &
+
+# Run the AI agent
+python -m bambot.agent --bot-file=/app/"{{ bot_file }}"
