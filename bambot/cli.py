@@ -3,7 +3,6 @@ import os
 import click
 import shutil
 from jinja2 import Environment, PackageLoader
-from tqdm import tqdm
 from .docker_utils import DockerManager
 from .log_utils import LogManager
 from .utils import copy_template
@@ -21,12 +20,12 @@ def echo_info(message):
 
 def print_bam_ascii_art():
     bam_ascii_art = r"""
-____                  
-|  _ \                 
-| |_) | __ _ _ __ ___  
-|  _ < / _` | '_ ` _ \ 
-| |_) | (_| | | | | | |
-|____/ \__,_|_| |_| |_|
+  ____                  
+ |  _ \                 
+ | |_) | __ _ _ __ ___  
+ |  _ < / _` | '_ ` _ \ 
+ | |_) | (_| | | | | | |
+ |____/ \__,_|_| |_| |_|
 """
     click.echo(click.style(bam_ascii_art, fg="green"))
 
@@ -93,7 +92,6 @@ def run(bot_file):
         return
 
     docker_manager = DockerManager()
-    log_manager = LogManager()
 
     if not docker_manager.is_docker_running():
         echo_error("Docker daemon is not running.")
@@ -106,11 +104,14 @@ def run(bot_file):
     try:
         print_bam_ascii_art()
         echo_info("Running Bam container...")
-        container_id = docker_manager.run_container(bot_path)
+        container_name = docker_manager.run_container(bot_path)
 
-        log_file = f"/app/output/bot_{container_id}.log"
+        log_file = f"{container_name}.log"
+        log_file_path = os.path.join("output", log_file)
+        log_manager = LogManager(log_file_path)
+
         echo_info("Processing logs...")
-        log_manager.process_logs(log_file)
+        log_manager.process_logs()
 
         echo_info("AI agent execution completed successfully.")
     except Exception as e:
@@ -125,6 +126,7 @@ def clean():
         "Procfile",
         "agent_readme.md",
         "output.zip",
+        "output",
     ]
 
     for file_name in files_to_remove:
