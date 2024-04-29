@@ -1,5 +1,4 @@
 FROM python:3.9-alpine
-
 WORKDIR /app
 
 # Install the required packages
@@ -11,8 +10,14 @@ RUN apk add --no-cache \
 # Copy the bambot directory
 COPY bambot/ bambot/
 
-# Install Python dependencies
-COPY requirements.txt ./
+# Install required packages for the app
+RUN pip install --no-cache-dir click tqdm jinja2
+
+# Copy the requirements.txt file if it exists, otherwise create an empty file
+COPY requirements.txt* ./
+RUN touch requirements.txt
+
+# Install additional packages from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the bot file

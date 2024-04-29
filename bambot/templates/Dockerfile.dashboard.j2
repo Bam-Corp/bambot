@@ -1,5 +1,4 @@
 FROM python:3.9-bullseye
-
 WORKDIR /app
 
 # Install required packages for pyarrow
@@ -8,8 +7,14 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt ./
+# Install required packages for the app
+RUN pip install --no-cache-dir click tqdm jinja2
+
+# Copy the requirements.txt file if it exists, otherwise create an empty file
+COPY requirements.txt* ./
+RUN touch requirements.txt
+
+# Install additional packages from requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir "pyarrow==10.0.1" \
     && pip install --no-cache-dir streamlit
