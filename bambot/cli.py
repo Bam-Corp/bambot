@@ -2,7 +2,8 @@
 import os
 import click
 import shutil
-from jinja2 import Environment, PackageLoader
+from jinja2 import Environment, FileSystemLoader
+from pkg_resources import resource_filename
 from .docker_utils import DockerManager
 from .log_utils import LogManager
 from .utils import copy_template
@@ -11,7 +12,8 @@ import signal
 import sys
 import threading
 
-env = Environment(loader=PackageLoader("bambot", "templates"))
+templates_dir = resource_filename("bambot", "templates")
+env = Environment(loader=FileSystemLoader(templates_dir))
 
 def echo_error(message):
     click.echo(click.style(f"Error: {message}", fg="red"), err=True)
