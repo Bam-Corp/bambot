@@ -8,6 +8,8 @@ from .docker_utils import DockerManager
 from .log_utils import LogManager
 from .utils import copy_template
 import signal
+import threading
+
 
 templates_dir = resource_filename("bambot", "templates")
 env = Environment(loader=FileSystemLoader(templates_dir))

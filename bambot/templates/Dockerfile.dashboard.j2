@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install required packages for the app
-RUN pip install --no-cache-dir click tqdm jinja2
+RUN pip install --no-cache-dir click tqdm jinja2 requests
 
 # Copy the requirements.txt file if it exists, otherwise create an empty file
 COPY requirements.txt* ./

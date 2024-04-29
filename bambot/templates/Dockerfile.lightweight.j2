@@ -13,7 +13,7 @@ RUN apk add --no-cache \
 COPY bambot/ bambot/
 
 # Install required packages for the app
-RUN pip install --no-cache-dir click tqdm jinja2
+RUN pip install --no-cache-dir click tqdm jinja2 requests
 
 # Copy the requirements.txt file if it exists, otherwise create an empty file
 COPY requirements.txt* ./

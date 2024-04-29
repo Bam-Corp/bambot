@@ -11,7 +11,7 @@ class DockerManager:
         self.container_name_prefix = "bam-agent-"
         self.include_dashboard = False
         self.repo_url = "https://github.com/Bam-Corp/bambot"
-        self.templates_dir = os.path.join(os.path.dirname(__file__), "bambot", "templates")
+        self.templates_dir = os.path.join(os.path.dirname(__file__), "templates")
         print(f"Templates directory: {self.templates_dir}")
         self.env = Environment(loader=FileSystemLoader(self.templates_dir))
 
@@ -30,28 +30,27 @@ class DockerManager:
             with tempfile.TemporaryDirectory() as temp_dir:
                 self.download_directory(temp_dir)
 
-                # Copy the necessary files to the Docker build context
-                build_context = os.path.join(temp_dir, "build_context")
-                os.makedirs(build_context, exist_ok=True)
-                print(f"Build context: {build_context}")
+                # Create a separate directory for the build context
+                build_context_dir = os.path.join(temp_dir, "build_context")
+                os.makedirs(build_context_dir, exist_ok=True)
 
-                # Copy the bambot package files
+                # Copy the bambot directory to the build context
                 bambot_dir = os.path.join(temp_dir, "bambot")
-                for item in os.listdir(bambot_dir):
-                    if item == "templates":
-                        continue  # Skip the templates directory
-                    src_path = os.path.join(bambot_dir, item)
-                    dst_path = os.path.join(build_context, item)
-                    if os.path.isdir(src_path):
-                        shutil.copytree(src_path, dst_path)
-                        print(f"Copied directory: {src_path} -> {dst_path}")
-                    else:
-                        shutil.copy2(src_path, dst_path)
-                        print(f"Copied file: {src_path} -> {dst_path}")
+                shutil.copytree(bambot_dir, os.path.join(build_context_dir, "bambot"))
+                print(f"Copied directory: {bambot_dir} -> {build_context_dir}/bambot")
+
+                # Copy the bot.py file from the root project directory
+                root_dir = os.path.dirname(os.path.dirname(__file__))
+                bot_file_path = os.path.join(root_dir, "bot.py")
+                if os.path.exists(bot_file_path):
+                    shutil.copy2(bot_file_path, os.path.join(build_context_dir, "bot.py"))
+                    print(f"Copied file: {bot_file_path} -> {build_context_dir}/bot.py")
+                else:
+                    print(f"bot.py file not found in the root directory: {root_dir}")
 
                 # Copy the Dockerfile template
                 dockerfile_template = "Dockerfile.dashboard.j2" if include_dashboard else "Dockerfile.lightweight.j2"
-                dockerfile_template_path = os.path.join(self.templates_dir, "bambot", "templates", dockerfile_template)
+                dockerfile_template_path = os.path.join(self.templates_dir, dockerfile_template)
                 print(f"Dockerfile template path: {dockerfile_template_path}")
 
                 if os.path.exists(dockerfile_template_path):
@@ -64,8 +63,8 @@ class DockerManager:
                     print("Rendered Dockerfile content:")
                     print(rendered_dockerfile)
 
-                    # Write the rendered Dockerfile directly to the build context
-                    dockerfile_path = os.path.join(build_context, "Dockerfile")
+                    # Write the rendered Dockerfile to the build context directory
+                    dockerfile_path = os.path.join(build_context_dir, "Dockerfile")
                     with open(dockerfile_path, "w") as dockerfile:
                         dockerfile.write(rendered_dockerfile)
                     print(f"Wrote Dockerfile: {dockerfile_path}")
@@ -76,14 +75,14 @@ class DockerManager:
                 run_sh_path = os.path.join(temp_dir, "bambot", "templates", "run.sh.j2")
                 print(f"run.sh path: {run_sh_path}")
                 if os.path.exists(run_sh_path):
-                    shutil.copy2(run_sh_path, os.path.join(build_context, "run.sh"))
-                    print(f"Copied run.sh script: {run_sh_path} -> {build_context}")
+                    shutil.copy2(run_sh_path, os.path.join(build_context_dir, "run.sh"))
+                    print(f"Copied run.sh script: {run_sh_path} -> {build_context_dir}")
                 else:
                     print(f"run.sh script not found: {run_sh_path}")
 
-                # Debug: List files in the build context
-                print("Files in the build context:")
-                subprocess.run(["ls", "-l", build_context], check=True)
+                # Debug: List files in the build context directory
+                print("Files in the build context directory:")
+                subprocess.run(["ls", "-l", build_context_dir], check=True)
 
                 build_args = {
                     "INCLUDE_DASHBOARD": str(include_dashboard).lower()
@@ -92,7 +91,7 @@ class DockerManager:
                 subprocess.run([
                     "docker", "build", "-t", "bam-agent", ".",
                     "--build-arg", f"INCLUDE_DASHBOARD={build_args['INCLUDE_DASHBOARD']}"
-                ], cwd=build_context, check=True)
+                ], cwd=build_context_dir, check=True)
 
         except (subprocess.CalledProcessError, requests.exceptions.RequestException, zipfile.BadZipFile) as e:
             raise RuntimeError(f"Error building Bam container image: {str(e)}")
