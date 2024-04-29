@@ -49,13 +49,16 @@ class DockerManager:
                         shutil.copy2(src_path, dst_path)
                         print(f"Copied file: {src_path} -> {dst_path}")
 
-                # Render the Dockerfile template
+                # Copy the Dockerfile template
                 dockerfile_template = "Dockerfile.dashboard.j2" if include_dashboard else "Dockerfile.lightweight.j2"
-                template_path = os.path.join(self.templates_dir, dockerfile_template)
-                print(f"Dockerfile template path: {template_path}")
-                if os.path.exists(template_path):
-                    template = self.env.get_template(dockerfile_template)
-                    rendered_dockerfile = template.render(bot_file=os.path.basename("bot.py"))
+                dockerfile_template_path = os.path.join(self.templates_dir, dockerfile_template)
+                print(f"Dockerfile template path: {dockerfile_template_path}")
+
+                if os.path.exists(dockerfile_template_path):
+                    with open(dockerfile_template_path, "r") as template_file:
+                        template_content = template_file.read()
+
+                    rendered_dockerfile = template_content.replace("{{ bot_file }}", os.path.basename("bot.py"))
 
                     # Write the rendered Dockerfile to the build context
                     dockerfile_path = os.path.join(build_context, "Dockerfile")
@@ -63,7 +66,7 @@ class DockerManager:
                         dockerfile.write(rendered_dockerfile)
                     print(f"Wrote Dockerfile: {dockerfile_path}")
                 else:
-                    print(f"Dockerfile template not found: {template_path}")
+                    print(f"Dockerfile template not found: {dockerfile_template_path}")
 
                 # Copy the run.sh script
                 run_sh_path = os.path.join(temp_dir, "bambot", "templates", "run.sh.j2")

@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir streamlit
 
 # Copy the bot file and bambot directory
-COPY {{ bot_file }} ./
+COPY bot.py ./
 COPY bambot/ bambot/
 
 # Set the PYTHONUNBUFFERED environment variable to ensure real-time output

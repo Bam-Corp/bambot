@@ -23,7 +23,7 @@ RUN touch requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the bot file
-COPY {{ bot_file }} ./
+COPY bot.py ./
 
 # Remove the build dependencies
 RUN apk del \
