@@ -33,6 +33,7 @@ class DockerManager:
                 # Copy the necessary files to the Docker build context
                 build_context = os.path.join(temp_dir, "build_context")
                 os.makedirs(build_context, exist_ok=True)
+                print(f"Build context: {build_context}")
 
                 # Copy the bambot package files
                 bambot_dir = os.path.join(temp_dir, "bambot")
@@ -43,8 +44,10 @@ class DockerManager:
                     dst_path = os.path.join(build_context, item)
                     if os.path.isdir(src_path):
                         shutil.copytree(src_path, dst_path)
+                        print(f"Copied directory: {src_path} -> {dst_path}")
                     else:
                         shutil.copy2(src_path, dst_path)
+                        print(f"Copied file: {src_path} -> {dst_path}")
 
                 # Render the Dockerfile template
                 dockerfile_template = "Dockerfile.dashboard.j2" if include_dashboard else "Dockerfile.lightweight.j2"
@@ -55,8 +58,10 @@ class DockerManager:
                     rendered_dockerfile = template.render(bot_file=os.path.basename("bot.py"))
 
                     # Write the rendered Dockerfile to the build context
-                    with open(os.path.join(build_context, "Dockerfile"), "w") as dockerfile:
+                    dockerfile_path = os.path.join(build_context, "Dockerfile")
+                    with open(dockerfile_path, "w") as dockerfile:
                         dockerfile.write(rendered_dockerfile)
+                    print(f"Wrote Dockerfile: {dockerfile_path}")
                 else:
                     print(f"Dockerfile template not found: {template_path}")
 
@@ -65,6 +70,7 @@ class DockerManager:
                 print(f"run.sh path: {run_sh_path}")
                 if os.path.exists(run_sh_path):
                     shutil.copy2(run_sh_path, os.path.join(build_context, "run.sh"))
+                    print(f"Copied run.sh script: {run_sh_path} -> {build_context}")
                 else:
                     print(f"run.sh script not found: {run_sh_path}")
 
