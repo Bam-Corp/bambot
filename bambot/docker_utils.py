@@ -51,7 +51,7 @@ class DockerManager:
 
                 # Copy the Dockerfile template
                 dockerfile_template = "Dockerfile.dashboard.j2" if include_dashboard else "Dockerfile.lightweight.j2"
-                dockerfile_template_path = os.path.join(self.templates_dir, dockerfile_template)
+                dockerfile_template_path = os.path.join(self.templates_dir, "bambot", "templates", dockerfile_template)
                 print(f"Dockerfile template path: {dockerfile_template_path}")
 
                 if os.path.exists(dockerfile_template_path):
