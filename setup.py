@@ -1,3 +1,4 @@
+# setup.py
 from setuptools import setup, find_packages
 
 with open("README.md", "r") as fh:
@@ -5,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="bambot",
-    version="0.3.8",
+    version="0.3.9",
     author="Bam Corp",
     author_email="spencer@bam.bot",
     description="Lightweight containers for AI agents",
