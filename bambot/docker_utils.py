@@ -64,7 +64,7 @@ class DockerManager:
                     print("Rendered Dockerfile content:")
                     print(rendered_dockerfile)
 
-                    # Write the rendered Dockerfile to the build context
+                    # Write the rendered Dockerfile directly to the build context
                     dockerfile_path = os.path.join(build_context, "Dockerfile")
                     with open(dockerfile_path, "w") as dockerfile:
                         dockerfile.write(rendered_dockerfile)
