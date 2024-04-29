@@ -60,15 +60,15 @@ class DockerManager:
 
                     rendered_dockerfile = template_content.replace("{{ bot_file }}", os.path.basename("bot.py"))
 
+                    # Print the rendered Dockerfile content
+                    print("Rendered Dockerfile content:")
+                    print(rendered_dockerfile)
+
                     # Write the rendered Dockerfile to the build context
                     dockerfile_path = os.path.join(build_context, "Dockerfile")
                     with open(dockerfile_path, "w") as dockerfile:
                         dockerfile.write(rendered_dockerfile)
                     print(f"Wrote Dockerfile: {dockerfile_path}")
-
-                    # Debug: List files in the build context
-                    print("Files in the build context:")
-                    subprocess.run(["ls", "-l", build_context], check=True)
                 else:
                     print(f"Dockerfile template not found: {dockerfile_template_path}")
 
@@ -80,6 +80,10 @@ class DockerManager:
                     print(f"Copied run.sh script: {run_sh_path} -> {build_context}")
                 else:
                     print(f"run.sh script not found: {run_sh_path}")
+
+                # Debug: List files in the build context
+                print("Files in the build context:")
+                subprocess.run(["ls", "-l", build_context], check=True)
 
                 build_args = {
                     "INCLUDE_DASHBOARD": str(include_dashboard).lower()
