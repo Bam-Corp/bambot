@@ -51,8 +51,18 @@ def build(bot_file, include_dashboard):
     bot_path = os.path.join(bot_dir, bot_file)
 
     if not os.path.exists(bot_path):
-        echo_error(f"{bot_file} not found in the current directory.")
-        return
+        echo_warning(f"{bot_file} not found in the current directory.")
+        generate_default = click.confirm(
+            f"To continue, you must provide a {bot_file} file. Generate a default one?",
+            default=True,
+        )
+        if generate_default:
+            copy_template(env, "bot.py.j2", bot_path)
+            echo_info(f"Generated default {bot_file} file. Customize it to add your AI agent logic.")
+        else:
+            echo_info(f"Please create a {bot_file} file and run 'bam build' again.")
+            echo_info(f"Refer to GitHub for examples or help: https://github.com/Bam-Corp/bambot")
+            return
 
     docker_manager = DockerManager()
 
@@ -66,7 +76,7 @@ def build(bot_file, include_dashboard):
 
     try:
         echo_info("Cleaning up unused containers and images...")
-        confirm_cleanup = click.confirm("Remove unused containers and images? Skip this step with 'No'", default=False)
+        confirm_cleanup = click.confirm("Remove unused containers and images? [y/N]", default=False)
         if confirm_cleanup:
             docker_manager.cleanup()
         else:
@@ -83,7 +93,6 @@ def build(bot_file, include_dashboard):
         copy_template(env, "agent_readme.md.j2", os.path.join(bot_dir, "agent_readme.md"))
         copy_template(env, "run.sh.j2", os.path.join(bot_dir, "run.sh"), include_dashboard=include_dashboard_value)
 
-        # Create a configuration file with the include_dashboard value
         config_file_path = os.path.join(bot_dir, "bambot.config")
         with open(config_file_path, "w") as config_file:
             config_file.write(f"include_dashboard={include_dashboard}")
