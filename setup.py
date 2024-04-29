@@ -20,6 +20,7 @@ setup(
         "click",
         "jinja2",
         "tqdm",
+        "requests"
     ],
     entry_points={
         "console_scripts": [
