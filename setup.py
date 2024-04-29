@@ -12,7 +12,7 @@ setup(
     description="Lightweight containers for AI agents",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/BamCorp/bambot",
+    url="https://github.com/Bam-Corp/bambot",
     packages=find_packages(),
     package_data={
         "bambot": ["templates/*"],
