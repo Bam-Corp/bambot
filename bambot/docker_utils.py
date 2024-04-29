@@ -65,6 +65,10 @@ class DockerManager:
                     with open(dockerfile_path, "w") as dockerfile:
                         dockerfile.write(rendered_dockerfile)
                     print(f"Wrote Dockerfile: {dockerfile_path}")
+
+                    # Debug: List files in the build context
+                    print("Files in the build context:")
+                    subprocess.run(["ls", "-l", build_context], check=True)
                 else:
                     print(f"Dockerfile template not found: {dockerfile_template_path}")
 
