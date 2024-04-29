@@ -1,17 +1,16 @@
-# bambot/cli.py
 import os
 import click
 import shutil
-from jinja2 import Environment, FileSystemLoader
-from pkg_resources import resource_filename
-from .docker_utils import DockerManager
-from .log_utils import LogManager
-from .utils import copy_template
+import jinja2
+import pkg_resources
+import subprocess
 import signal
 import threading
+from .log_utils import LogManager
 
-templates_dir = resource_filename("bambot", "templates")
-env = Environment(loader=FileSystemLoader(templates_dir))
+# Load templates from the installed package
+templates_loader = jinja2.PackageLoader("bambot", "templates")
+env = jinja2.Environment(loader=templates_loader)
 
 def echo_error(message):
     click.echo(click.style(f"Error: {message}", fg="red"), err=True)
@@ -57,7 +56,9 @@ def build(bot_file, include_dashboard):
             default=True,
         )
         if generate_default:
-            copy_template(env, "bot.py.j2", bot_path)
+            default_bot_template = env.get_template("bot.py.j2")
+            with open(bot_path, "w") as f:
+                f.write(default_bot_template.render())
             echo_info(f"Generated default {bot_file} file. Customize it to add your AI agent logic.")
         else:
             echo_info(f"Please create a {bot_file} file and run 'bam build' again.")
@@ -84,14 +85,16 @@ def build(bot_file, include_dashboard):
 
         echo_info("Generating deployment files...")
         if include_dashboard:
-            copy_template(env, "Dockerfile.dashboard.j2", os.path.join(bot_dir, "Dockerfile"))
-            include_dashboard_value = "true"
+            dockerfile_template = env.get_template("Dockerfile.dashboard.j2")
         else:
-            copy_template(env, "Dockerfile.lightweight.j2", os.path.join(bot_dir, "Dockerfile"))
-            include_dashboard_value = "false"
+            dockerfile_template = env.get_template("Dockerfile.lightweight.j2")
+
+        with open(os.path.join(bot_dir, "Dockerfile"), "w") as f:
+            f.write(dockerfile_template.render(bot_file=os.path.basename(bot_file)))
+
         copy_template(env, "Procfile.j2", os.path.join(bot_dir, "Procfile"))
         copy_template(env, "agent_readme.md.j2", os.path.join(bot_dir, "agent_readme.md"))
-        copy_template(env, "run.sh.j2", os.path.join(bot_dir, "run.sh"), include_dashboard=include_dashboard_value)
+        copy_template(env, "run.sh.j2", os.path.join(bot_dir, "run.sh"), include_dashboard=str(include_dashboard))
 
         config_file_path = os.path.join(bot_dir, "bambot.config")
         with open(config_file_path, "w") as config_file:
@@ -196,6 +199,70 @@ def clean():
                 echo_error(f"Error removing {file_name}: {str(e)}")
 
     echo_info("Clean up completed successfully.")
+
+def copy_template(env, template_name, output_path, **kwargs):
+    template = env.get_template(template_name)
+    with open(output_path, "w") as f:
+        f.write(template.render(**kwargs))
+
+class DockerManager:
+    def __init__(self):
+        self.container_name_prefix = "bam-agent-"
+
+    def is_docker_running(self):
+        try:
+            subprocess.run(["docker", "info"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+            return True
+        except subprocess.CalledProcessError:
+            return False
+
+    def build_image(self, bot_file, bot_dir, include_dashboard):
+        try:
+            build_context_dir = os.path.join(bot_dir, "build_context")
+            os.makedirs(build_context_dir, exist_ok=True)
+
+            # Copy the bot.py file to the build context
+            bot_file_path = os.path.join(bot_dir, bot_file)
+            shutil.copy2(bot_file_path, build_context_dir)
+
+            # Copy the run.sh script to the build context
+            run_sh_template = env.get_template("run.sh.j2")
+            run_sh_path = os.path.join(build_context_dir, "run.sh")
+            with open(run_sh_path, "w") as f:
+                f.write(run_sh_template.render(include_dashboard=str(include_dashboard)))
+
+            build_args = {
+                "INCLUDE_DASHBOARD": str(include_dashboard).lower()
+            }
+
+            subprocess.run([
+                "docker", "build", "-t", "bam-agent", ".",
+                "--build-arg", f"INCLUDE_DASHBOARD={build_args['INCLUDE_DASHBOARD']}"
+            ], cwd=build_context_dir, check=True)
+
+        except (subprocess.CalledProcessError, Exception) as e:
+            raise RuntimeError(f"Error building Bam container image: {str(e)}")
+
+    def run_container(self, bot_file):
+        container_name = os.path.splitext(os.path.basename(bot_file))[0]
+
+        try:
+            subprocess.run([
+                "docker", "run", "--rm", "--name", f"{self.container_name_prefix}{container_name}",
+                "-v", f"{os.path.abspath(bot_file)}:/app/{os.path.basename(bot_file)}:ro",
+                "--memory=256m", "--memory-swap=256m", "--cpus=1", "--cap-drop=ALL", "--security-opt=no-new-privileges",
+                "bam-agent", "python", "-m", "bambot.agent", "--bot-file=/app/{}".format(os.path.basename(bot_file))
+            ], check=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Error running Bam container: {str(e)}")
+
+        return container_name
+
+    def cleanup(self):
+        try:
+            subprocess.run(["docker", "system", "prune", "-f"], check=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Error cleaning up containers and images: {str(e)}")
 
 if __name__ == "__main__":
     cli()

@@ -9,21 +9,12 @@ RUN apk add --no-cache \
     musl-dev \
     libffi-dev
 
-# Copy the bambot directory
-COPY bambot/ bambot/
-
-# Install required packages for the app
-RUN pip install --no-cache-dir click tqdm jinja2 requests
-
-# Copy the requirements.txt file if it exists, otherwise create an empty file
-COPY requirements.txt* ./
-RUN touch requirements.txt
+# Copy the bot file
+COPY {{ bot_file }} ./
 
 # Install additional packages from requirements.txt
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the bot file
-COPY bot.py ./
 
 # Remove the build dependencies
 RUN apk del \
@@ -38,10 +29,10 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
 # Copy the run script
-COPY run.sh /app/run.sh
+COPY run.sh ./
 
 # Make the run script executable
-RUN chmod +x /app/run.sh
+RUN chmod +x run.sh
 
 # Start the agent
-CMD ["/app/run.sh"]
+CMD ["./run.sh"]
