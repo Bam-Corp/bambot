@@ -7,10 +7,7 @@ from pkg_resources import resource_filename
 from .docker_utils import DockerManager
 from .log_utils import LogManager
 from .utils import copy_template
-import subprocess
 import signal
-import sys
-import threading
 
 templates_dir = resource_filename("bambot", "templates")
 env = Environment(loader=FileSystemLoader(templates_dir))
@@ -100,12 +97,16 @@ def build(bot_file, include_dashboard):
             config_file.write(f"include_dashboard={include_dashboard}")
 
         echo_info("Building Bam container image...")
-        docker_manager.build_image(include_dashboard)
+        try:
+            docker_manager.build_image(include_dashboard)
+        except RuntimeError as e:
+            echo_error(f"Failed to build Docker image: {str(e)}")
+            return
 
         echo_info("Deployment files prepared successfully!")
         echo_info("You can now run the 'bam run' command to start your AI agent container.")
     except Exception as e:
-        echo_error(str(e))
+        echo_error(f"An unexpected error occurred: {str(e)}")
 
 @cli.command()
 @click.option("--bot-file", "-b", default="bot.py", help="Name of the bot file (e.g., my_bot.py).")
@@ -167,14 +168,6 @@ def run(bot_file):
         echo_info("AI agent execution completed.")
     except Exception as e:
         echo_error(str(e))
-
-
-def run_streamlit_app():
-    try:
-        os.chdir("bambot")  # Change to the bambot directory
-        subprocess.run(["python", "-m", "streamlit", "run", "dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"])
-    except Exception as e:
-        echo_error(f"Error running Streamlit app: {e}")
 
 @cli.command()
 def clean():
