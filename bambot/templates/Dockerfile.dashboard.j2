@@ -1,6 +1,5 @@
 # bambot/templates/Dockerfile.dashboard.j2
 FROM python:3.9-bullseye
-
 WORKDIR /app
 
 # Install required packages for pyarrow
@@ -9,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the bot file
+# Copy the bot file from the build context
 COPY {{ bot_file }} ./
 
 # Install additional packages from requirements.txt

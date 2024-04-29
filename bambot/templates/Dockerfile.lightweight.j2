@@ -1,6 +1,5 @@
 # bambot/templates/Dockerfile.lightweight.j2
 FROM python:3.9-alpine
-
 WORKDIR /app
 
 # Install the required packages
@@ -9,7 +8,7 @@ RUN apk add --no-cache \
     musl-dev \
     libffi-dev
 
-# Copy the bot file
+# Copy the bot file from the build context
 COPY {{ bot_file }} ./
 
 # Install additional packages from requirements.txt
