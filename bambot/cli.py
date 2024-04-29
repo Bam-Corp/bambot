@@ -10,7 +10,6 @@ from .utils import copy_template
 import signal
 import threading
 
-
 templates_dir = resource_filename("bambot", "templates")
 env = Environment(loader=FileSystemLoader(templates_dir))
 
@@ -39,7 +38,7 @@ def cli():
     """
     Bambot: A framework for deploying AI agents as Docker containers.
 
-    For more information, visit https://github.com/BamCorp/bambot
+    For more information, visit https://github.com/Bam-Corp/bambot
     """
     pass
 
@@ -100,7 +99,7 @@ def build(bot_file, include_dashboard):
 
         echo_info("Building Bam container image...")
         try:
-            docker_manager.build_image(include_dashboard)
+            docker_manager.build_image(bot_file, bot_dir, include_dashboard)
         except RuntimeError as e:
             echo_error(f"Failed to build Docker image: {str(e)}")
             return
