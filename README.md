@@ -45,4 +45,4 @@ If you have any questions, issues, or suggestions, please [open an issue](https:
 
 Happy coding!
 
-*Note: Bam is early in development but it's improving fast*
+*Note: Bam is VERY much a work-in-progress. more to come very soon!*

@@ -9,7 +9,7 @@ setup(
     version="0.4.0",
     author="Bam Corp",
     author_email="spencer@bam.bot",
-    description="Lightweight containers for AI agents",
+    description="Containers for AI agents",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Bam-Corp/bambot",
