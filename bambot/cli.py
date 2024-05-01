@@ -19,16 +19,6 @@ def generate_container_name():
     number = ''.join(random.choices(string.digits, k=4))
     return f"{adjective}-{noun}-{number}"
 
-
-bam_ascii_art = r"""
-  ____                  
- |  _ \                 
- | |_) | __ _ _ __ ___  
- |  _ < / _` | '_ ` _ \ 
- | |_) | (_| | | | | | |
- |____/ \__,_|_| |_| |_|
-"""
-
 @click.group()
 def cli():
     """Bam CLI application"""
@@ -105,12 +95,6 @@ def logging():
     """Set up logging for the Bam CLI application"""
     setup_logging()
     click.echo(click.style("Logging set up successfully!", fg="green"))
-
-@cli.command()
-def ascii_art():
-    """Display the Bam ASCII art"""
-    click.echo(bam_ascii_art)
-    click.echo(click.style("Welcome to the Bam CLI application!", fg="green"))
 
 def main():
     cli()
