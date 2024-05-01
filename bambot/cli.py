@@ -1,31 +1,26 @@
-# bambot/cli.py
-import os
+# bam/cli.py
 import click
-import shutil
-import jinja2
-import pkg_resources
-import subprocess
-import signal
-import threading
-from .log_utils import LogManager
-import tempfile
-from .docker_utils import DockerManager
+from .container import create_container, run_container
+from .docker_utils import prune_system, list_containers
+from .logging import setup_logging
+from .metrics import setup_metrics
+from .prometheus import setup_prometheus
+from .streamlit_dashboard import setup_streamlit_dashboard
+import docker
+import random
+import string
 
-# Load templates from the installed package
-templates_loader = jinja2.PackageLoader("bambot", "templates")
-env = jinja2.Environment(loader=templates_loader)
 
-def echo_error(message):
-    click.echo(click.style(f"Error: {message}", fg="red"), err=True)
+def generate_container_name():
+    adjectives = ["happy", "jolly", "brave", "clever", "friendly", "gentle", "kind", "lucky", "silly", "witty"]
+    nouns = ["panda", "tiger", "lion", "eagle", "owl", "dolphin", "turtle", "penguin", "koala", "kangaroo"]
+    adjective = random.choice(adjectives)
+    noun = random.choice(nouns)
+    number = ''.join(random.choices(string.digits, k=4))
+    return f"{adjective}-{noun}-{number}"
 
-def echo_warning(message):
-    click.echo(click.style(f"Warning: {message}", fg="yellow"), err=True)
 
-def echo_info(message):
-    click.echo(click.style(f"Info: {message}", fg="green"))
-
-def print_bam_ascii_art():
-    bam_ascii_art = r"""
+bam_ascii_art = r"""
   ____                  
  |  _ \                 
  | |_) | __ _ _ __ ___  
@@ -33,181 +28,92 @@ def print_bam_ascii_art():
  | |_) | (_| | | | | | |
  |____/ \__,_|_| |_| |_|
 """
-    click.echo(click.style(bam_ascii_art, fg="green"))
 
 @click.group()
 def cli():
-    """
-    Bambot: A framework for deploying AI agents as Docker containers.
-
-    For more information, visit https://github.com/Bam-Corp/bambot
-    """
+    """Bam CLI application"""
     pass
 
+@cli.group()
+def create():
+    """Create a new container for an AI agent"""
+    pass
+
+@create.command()
+@click.argument("container_name", default="")
+@click.option("--agent-type", default="langchain", help="AI agent type")
+@click.option("--env-file", default=".env", help="Path to the .env file")
+def container(container_name, agent_type, env_file):
+    if not container_name:
+        container_name = generate_container_name()
+    
+    click.echo(click.style(f"Creating container: {container_name}", fg="yellow"))
+    
+    if click.confirm("Do you want to clean unused docker resources before building the container?"):
+        click.echo(click.style("Pruning system resources...", fg="yellow"))
+        prune_system()
+        click.echo(click.style("System resources pruned successfully!", fg="green"))
+    
+    create_container(container_name, agent_type, env_file)
+    click.echo(click.style(f"Container '{container_name}' created successfully!", fg="green"))
+
 @cli.command()
-@click.option("--bot-file", "-b", default="bot.py", help="Name of the bot file (e.g., my_bot.py).")
-@click.option("--include-dashboard", "-d", is_flag=True, help="Include the Streamlit dashboard in the Docker image.")
-def build(bot_file, include_dashboard):
-    """Build and generate deployment files for an AI agent."""
-    bot_dir = os.getcwd()
-    bot_path = os.path.join(bot_dir, bot_file)
-
-    if not os.path.exists(bot_path):
-        echo_warning(f"{bot_file} not found in the current directory.")
-        generate_default = click.confirm(
-            f"To continue, you must provide a {bot_file} file. Generate a default one?",
-            default=True,
-        )
-        if generate_default:
-            default_bot_template = env.get_template("bot.py.j2")
-            with open(bot_path, "w") as f:
-                f.write(default_bot_template.render())
-            echo_info(f"Generated default {bot_file} file. Customize it to add your AI agent logic.")
-        else:
-            echo_info(f"Please create a {bot_file} file and run 'bam build' again.")
-            echo_info(f"Refer to GitHub for examples or help: https://github.com/Bam-Corp/bambot")
-            return
-
-    docker_manager = DockerManager()
-
-    if not docker_manager.is_docker_running():
-        echo_error("Docker daemon is not running.")
-        echo_warning("Please start the Docker daemon and try again.")
-        echo_info("You can check the status of the Docker daemon using the following command:")
-        echo_info("  docker info")
-        echo_info("If Docker is not installed, you can download it from https://www.docker.com/get-started")
+def run():
+    """Run an AI agent container"""
+    containers = list_containers()
+    if not containers:
+        click.echo(click.style("No containers found.", fg="red"))
         return
-
+    
+    click.echo(click.style("Available containers:", fg="yellow"))
+    for index, container in enumerate(containers, start=1):
+        click.echo(f"{index}. {container.name}")
+    
+    choice = click.prompt("Enter the number of the container to run", type=int)
+    if choice < 1 or choice > len(containers):
+        click.echo(click.style("Invalid choice.", fg="red"))
+        return
+    
+    container_name = containers[choice - 1].name
+    click.echo(click.style(f"Starting container: {container_name}", fg="yellow"))
     try:
-        echo_info("Cleaning up unused containers and images...")
-        confirm_cleanup = click.confirm("Remove unused containers and images? [y/N]", default=False)
-        if confirm_cleanup:
-            docker_manager.cleanup()
-        else:
-            echo_info("Skipping cleanup operation.")
-
-        echo_info("Generating deployment files...")
-        if include_dashboard:
-            dockerfile_template = env.get_template("Dockerfile.dashboard.j2")
-        else:
-            dockerfile_template = env.get_template("Dockerfile.lightweight.j2")
-
-        with open(os.path.join(bot_dir, "Dockerfile"), "w") as f:
-            f.write(dockerfile_template.render(bot_file=os.path.basename(bot_file)))
-
-        copy_template(env, "Procfile.j2", os.path.join(bot_dir, "Procfile"))
-        copy_template(env, "agent_readme.md.j2", os.path.join(bot_dir, "agent_readme.md"))
-        copy_template(env, "run.sh.j2", os.path.join(bot_dir, "run.sh"), include_dashboard=str(include_dashboard))
-
-        config_file_path = os.path.join(bot_dir, "bambot.config")
-        with open(config_file_path, "w") as config_file:
-            config_file.write(f"include_dashboard={include_dashboard}")
-
-        echo_info("Building Bam container image...")
-        try:
-            docker_manager.build_image(bot_file, bot_dir, include_dashboard)
-        except RuntimeError as e:
-            echo_error(f"Failed to build Docker image: {str(e)}")
-            return
-
-        echo_info("Deployment files prepared successfully!")
-        echo_info("You can now run the 'bam run' command to start your AI agent container.")
-    except Exception as e:
-        echo_error(f"An unexpected error occurred: {str(e)}")
+        run_container(container_name)
+        click.echo(click.style(f"Container '{container_name}' exited.", fg="green"))
+    except docker.errors.APIError as e:
+        click.echo(click.style(f"Error running container: {str(e)}", fg="red"))
 
 @cli.command()
-@click.option("--bot-file", "-b", default="bot.py", help="Name of the bot file (e.g., my_bot.py).")
-def run(bot_file):
-    """Run an AI agent locally."""
-    bot_dir = os.getcwd()
-    bot_path = os.path.join(bot_dir, bot_file)
-
-    if not os.path.exists(bot_path):
-        echo_error(f"{bot_file} not found in the current directory.")
-        return
-
-    docker_manager = DockerManager()
-
-    if not docker_manager.is_docker_running():
-        echo_error("Docker daemon is not running.")
-        echo_warning("Please start the Docker daemon and try again.")
-        echo_info("You can check the status of the Docker daemon using the following command:")
-        echo_info("  docker info")
-        echo_info("If Docker is not installed, you can download it from https://www.docker.com/get-started")
-        return
-
-    try:
-        print_bam_ascii_art()
-        echo_info("Running container...")
-        container_name = docker_manager.run_container(bot_path)
-
-        log_manager = LogManager()
-
-        # Read the include_dashboard value from the configuration file
-        config_file_path = os.path.join(bot_dir, "bambot.config")
-        with open(config_file_path, "r") as config_file:
-            config_lines = config_file.readlines()
-
-        include_dashboard = False
-        for line in config_lines:
-            if line.startswith("include_dashboard="):
-                include_dashboard = line.split("=")[1].strip() == "true"
-                break
-
-        # Check if the Streamlit dashboard is included
-        if include_dashboard:
-            echo_info("Streamlit dashboard is available at http://localhost:8501")
-            echo_info("Press Ctrl+C to stop the AI agent and Streamlit dashboard.")
-
-        # Run the log manager in a separate thread to simulate real-time log generation
-        log_thread = threading.Thread(target=log_manager.process_logs)
-        log_thread.start()
-
-        # Wait for the user to press Ctrl+C to stop the container
-        try:
-            signal.pause()
-        except KeyboardInterrupt:
-            echo_info("Stopping the AI agent...")
-
-        # Terminate the log thread
-        log_thread.join(timeout=5)
-
-        echo_info("AI agent execution completed.")
-    except Exception as e:
-        echo_error(str(e))
+def dashboard():
+    """Launch the Streamlit dashboard"""
+    setup_streamlit_dashboard()
+    click.echo(click.style("Streamlit dashboard launched successfully!", fg="green"))
 
 @cli.command()
-def clean():
-    """Clean up generated deployment files."""
-    bot_dir = os.getcwd()
-    files_to_remove = [
-        "Dockerfile",
-        "Procfile",
-        "agent_readme.md",
-        "run.sh",
-        "bambot.config",
-        "build_context",
-    ]
+def metrics():
+    """Set up metrics for the Bam CLI application"""
+    setup_metrics()
+    click.echo(click.style("Metrics set up successfully!", fg="green"))
 
-    for file_name in files_to_remove:
-        file_path = os.path.join(bot_dir, file_name)
-        if os.path.exists(file_path):
-            try:
-                if os.path.isfile(file_path):
-                    os.remove(file_path)
-                    echo_info(f"Removed {file_name}")
-                else:
-                    shutil.rmtree(file_path)
-                    echo_info(f"Removed directory {file_name}")
-            except Exception as e:
-                echo_error(f"Error removing {file_name}: {str(e)}")
+@cli.command()
+def prometheus():
+    """Set up Prometheus metrics for the Bam CLI application"""
+    setup_prometheus()
+    click.echo(click.style("Prometheus metrics set up successfully!", fg="green"))
 
-    echo_info("Clean up completed successfully.")
+@cli.command()
+def logging():
+    """Set up logging for the Bam CLI application"""
+    setup_logging()
+    click.echo(click.style("Logging set up successfully!", fg="green"))
 
-def copy_template(env, template_name, output_path, **kwargs):
-    template = env.get_template(template_name)
-    with open(output_path, "w") as f:
-        f.write(template.render(**kwargs))
+@cli.command()
+def ascii_art():
+    """Display the Bam ASCII art"""
+    click.echo(bam_ascii_art)
+    click.echo(click.style("Welcome to the Bam CLI application!", fg="green"))
+
+def main():
+    cli()
 
 if __name__ == "__main__":
-    cli()
+    main()

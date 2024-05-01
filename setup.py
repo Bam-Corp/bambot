@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="bambot",
-    version="0.3.9",
+    version="0.4.0",
     author="Bam Corp",
     author_email="spencer@bam.bot",
     description="Lightweight containers for AI agents",
@@ -14,19 +14,10 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/Bam-Corp/bambot",
     packages=find_packages(),
-    package_data={
-        "bambot": ["templates/*"],
-    },
-    install_requires=[
-        "click",
-        "jinja2",
-        "tqdm",
-        "requests"
-    ],
+    package_data={'bambot': ['templates/*']},
+    install_requires=["click", "docker", "prometheus-client", "streamlit", "tqdm", "python-dotenv"],
     entry_points={
-        "console_scripts": [
-            "bam=bambot.cli:cli",
-        ],
+        "console_scripts": ["bam=bambot.cli:main"]
     },
     classifiers=[
         "Development Status :: 4 - Beta",

@@ -3,4 +3,4 @@ docker
 prometheus-client
 streamlit
 tqdm
-python-dotenv
+langchain

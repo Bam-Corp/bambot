@@ -1,8 +1,0 @@
-#!/bin/bash
-
-if [ "$INCLUDE_DASHBOARD" = "true" ]; then
-    streamlit run --server.port 8501 --logger.level error bambot/dashboard.py &
-    DASHBOARD_PID=$!
-fi
-
-python -m bambot.agent --bot-file=/app/{{ bot_file }}
