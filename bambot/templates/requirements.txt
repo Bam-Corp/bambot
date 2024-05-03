@@ -4,3 +4,4 @@ tqdm
 langchain
 flask
 flask-cors
+colorama
