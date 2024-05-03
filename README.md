@@ -3,7 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/bambot.svg)](https://badge.fury.io/py/bambot)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Bam is a lightweight and easy-to-use command-line interface (CLI) tool for creating and running AI agent containers.
+Bam is a lightweight and easy-to-use command-line interface (CLI) tool for creating and running AI agent containers. It is currently Docker-based.
 
 ## Installation
 
@@ -20,13 +20,18 @@ To get started with bambot, follow these simple steps:
 ```bash
 pip install bambot
 ```
-2. Create a new AI agent container:
+2. Initialize a new Bam project:
 ```bash
-bam app create
+bam init [CONTAINER_NAME]
 ```
-3. Run the AI agent container locally:
+3. Build the Bam project locally:
 ```bash
-bam app run
+cd [CONTAINER_NAME]
+bam build
+```
+4. Start the AI agent container locally:
+```bash
+bam start
 ```
 
 That's it! You're now ready to start using Bam to create and run AI agent containers.
