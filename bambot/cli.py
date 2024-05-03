@@ -1,86 +1,44 @@
 # bambot/cli.py
 import click
-import random
-import string
-from .app import create_app, run_app
-from .docker_utils import prune_system, list_apps
-import docker
-
-
-def generate_app_name():
-    prefix = "bam"
-    adjectives = ["brave", "clever", "friendly", "gentle", "kind", "lucky", "silly", "witty"]
-    nouns = ["panda", "tiger", "lion", "eagle", "owl", "dolphin", "turtle", "penguin", "koala", "kangaroo"]
-    adjective = random.choice(adjectives)
-    noun = random.choice(nouns)
-    number = ''.join(random.choices(string.digits, k=4))
-    return f"{prefix}-{adjective}-{noun}-{number}"
+from .project import init_project
+from .build import build_project
+from .run import run_project
+from .utils import setup_logging, echo_info, echo_success, echo_error, confirm_with_style, prune_system
 
 @click.group()
 def cli():
     """Bam CLI application"""
-    pass
+    setup_logging()
 
-@cli.group("app")
-def app_group():
-    """Manage AI agent applications"""
-    pass
+@cli.command("init")
+@click.argument("container_name", required=False)
+def init_command(container_name):
+    """Initialize a new Bam project"""
+    try:
+        init_project(container_name)
+    except Exception as e:
+        echo_error(f"Error initializing project: {e}")
 
-@app_group.command("create")
-@click.argument("name", required=False)
-@click.option("--agent-type", default="langchain", help="AI agent type")
-@click.option("--env-file", default=".env", help="Path to the .env file")
-def create_command(name, agent_type, env_file):
-    """Create a new application for an AI agent"""
-    if not name:
-        name = generate_app_name()
-
-    click.echo(click.style(f"Creating app: {name}", fg="yellow"))
-
-    if click.confirm("Do you want to clean unused docker resources before building the app?"):
-        with click.progressbar(length=4, label="Pruning system resources") as bar:
-            prune_system(bar)
-        click.echo(click.style("System resources pruned successfully!", fg="green"))
-
-    create_app(name, agent_type, env_file)
-    click.echo(click.style(f"App '{name}' created successfully!", fg="green"))
-
-@app_group.command("run")
-@click.argument("name", required=False)
-def run_command(name):
-    """Run an AI agent application"""
-    apps = list_apps(prefix="bam")
-    if not apps:
-        click.echo(click.style("No apps found.", fg="red"))
-        return
-
-    click.echo(click.style("Available apps:", fg="yellow"))
-    for index, app in enumerate(apps, start=1):
-        click.echo(f"{index}. {app.name}")
-
-    if not name:
-        choice = click.prompt("Please select the app to run", type=int)
-        if choice < 1 or choice > len(apps):
-            click.echo(click.style("Invalid choice.", fg="red"))
-            return
-        name = apps[choice - 1].name
-
-    click.echo(click.style(r"""
-       ____                  
-      |  _ \                 
-      | |_) | __ _ _ __ ___  
-      |  _ < / _` | '_ ` _ \ 
-      | |_) | (_| | | | | | |
-      |____/ \__,_|_| |_| |_|
-                              
-    """, fg="bright_yellow"))
-    click.echo(click.style(f"🚀 Running app: {name}", fg="bright_blue"))
+@cli.command("build")
+def build_command():
+    """Build the Bam project"""
+    if confirm_with_style("Do you want to clean up unused Docker resources before building?"):
+        prune_system()
+        echo_success("Unused Docker resources cleaned up successfully!")
 
     try:
-        run_app(name)
-        click.echo(click.style(f"App '{name}' exited.", fg="green"))
-    except docker.errors.APIError as e:
-        click.echo(click.style(f"Error running app: {str(e)}", fg="red"))
+        build_project()
+    except Exception as e:
+        echo_error(f"Error building project: {e}")
+
+@cli.command("start")
+@click.option("--container-name", "-n", default=None, help="Name of the container to start")
+def start_command(container_name):
+    """Start the Bam project"""
+    try:
+        run_project(container_name)
+    except Exception as e:
+        echo_error(f"Error starting project: {e}")
 
 def main():
     cli()
