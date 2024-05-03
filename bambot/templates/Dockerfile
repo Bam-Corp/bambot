@@ -3,12 +3,12 @@ FROM python:3.11-alpine
 
 WORKDIR /app
 
-# Install only the necessary dependencies
+# Install deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy only the required files
+# Copy over project files
 COPY . .
 
 # Run the application

@@ -1,8 +1,9 @@
-# bambot/server.py
+# bambot/templates/server.py
 import logging
 from colorama import Fore, Style
 from flask import Flask, render_template_string, jsonify, request
 from flask_cors import CORS
+import datetime
 
 from agent_runner import Agent
 
@@ -20,9 +21,17 @@ class ColoredFormatter(logging.Formatter):
             "ERROR": Fore.RED,
             "CRITICAL": Fore.RED + Style.BRIGHT
         }
-        if self.use_color and record.levelname in level_color:
-            record.msg = level_color[record.levelname] + record.msg + Style.RESET_ALL
-        return super().format(record)
+
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        level_name = record.levelname
+        message = record.getMessage()
+
+        if self.use_color and level_name in level_color:
+            level_name = level_color[level_name] + level_name + Style.RESET_ALL
+            message = level_color[record.levelname] + message + Style.RESET_ALL
+
+        log_line = f"{Fore.MAGENTA}[{timestamp}]{Style.RESET_ALL} {Fore.BLUE}[{level_name}]{Style.RESET_ALL} {message}"
+        return log_line
 
 # Setup Flask application
 app = Flask(__name__)
@@ -109,4 +118,4 @@ def not_found(error):
     return render_template_string(template), 404
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=1337)
+    app.run(host="0.0.0.0", port=1337, debug=True)
