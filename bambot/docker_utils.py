@@ -1,4 +1,4 @@
-# docker_utils.py
+# bambot/docker_utils.py
 import os
 import docker
 from tqdm import tqdm
