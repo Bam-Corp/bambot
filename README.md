@@ -22,11 +22,11 @@ pip install bambot
 ```
 2. Create a new AI agent container:
 ```bash
-bam create container
+bam app create
 ```
-3. Run the AI agent container:
+3. Run the AI agent container locally:
 ```bash
-bam run
+bam app run
 ```
 
 That's it! You're now ready to start using Bam to create and run AI agent containers.
