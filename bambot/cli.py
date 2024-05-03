@@ -1,4 +1,4 @@
-# cli.py
+# bambot/cli.py
 import click
 import random
 import string
