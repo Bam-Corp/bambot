@@ -1,4 +1,4 @@
-# bam/templates/langchain_template.py
+# bambot/templates/langchain_template.py
 from langchain import OpenAI, ConversationChain
 
 class Agent:

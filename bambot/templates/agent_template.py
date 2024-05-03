@@ -1,4 +1,4 @@
-# bam/templates/agent_template.py
+# bambot/templates/agent_template.py
 import os
 
 class Agent:

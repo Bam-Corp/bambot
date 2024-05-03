@@ -1,6 +1,6 @@
 click
 docker
-prometheus-client
-streamlit
 tqdm
 langchain
+flask
+flask-cors

@@ -1,9 +1,9 @@
-# bam/templates/main.py
+# bambot/templates/agent_runner.py
 from {{AGENT_TYPE}}_agent import Agent
 
-def main():
+def run_agent():
     agent = Agent()
     agent.run()
 
 if __name__ == "__main__":
-    main()
+    run_agent()
