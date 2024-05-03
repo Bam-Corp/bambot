@@ -1,4 +1,4 @@
-# container.py
+# bambot/app.py
 import os
 import click
 import pkg_resources
@@ -56,9 +56,9 @@ def run_app(container_name):
 
     # Set up signal handler for SIGINT (Ctrl+C)
     def signal_handler(sig, frame):
-        click.echo(click.style("\nStopping container...", fg="yellow"))
+        click.echo(click.style("\nStopping container, hang in there...", fg="yellow"))
         container.stop()
-        click.echo(click.style("Container stopped.", fg="green"))
+        click.echo(click.style("Container gracefully stopped. You may go about your life now.", fg="green"))
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)
