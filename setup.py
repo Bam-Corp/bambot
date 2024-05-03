@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="bambot",
-    version="0.4.2",
+    version="0.4.3",
     author="Bam Corp",
     author_email="spencer@bam.bot",
     description="Containers for AI agents",
@@ -15,7 +15,7 @@ setup(
     url="https://github.com/Bam-Corp/bambot",
     packages=find_packages(),
     package_data={'bambot': ['templates/*']},
-    install_requires=["click", "docker", "tqdm", "python-dotenv"],
+    install_requires=["click", "docker", "tqdm", "python-dotenv", "halo", "colorama"],
     entry_points={
         "console_scripts": ["bam=bambot.cli:main"]
     },
