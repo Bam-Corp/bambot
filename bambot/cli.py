@@ -1,100 +1,86 @@
-# bam/cli.py
+# cli.py
 import click
-from .container import create_container, run_container
-from .docker_utils import prune_system, list_containers
-from .logging import setup_logging
-from .metrics import setup_metrics
-from .prometheus import setup_prometheus
-from .streamlit_dashboard import setup_streamlit_dashboard
-import docker
 import random
 import string
+from .app import create_app, run_app
+from .docker_utils import prune_system, list_apps
+import docker
 
 
-def generate_container_name():
-    adjectives = ["happy", "jolly", "brave", "clever", "friendly", "gentle", "kind", "lucky", "silly", "witty"]
+def generate_app_name():
+    prefix = "bam"
+    adjectives = ["brave", "clever", "friendly", "gentle", "kind", "lucky", "silly", "witty"]
     nouns = ["panda", "tiger", "lion", "eagle", "owl", "dolphin", "turtle", "penguin", "koala", "kangaroo"]
     adjective = random.choice(adjectives)
     noun = random.choice(nouns)
     number = ''.join(random.choices(string.digits, k=4))
-    return f"{adjective}-{noun}-{number}"
+    return f"{prefix}-{adjective}-{noun}-{number}"
 
 @click.group()
 def cli():
     """Bam CLI application"""
     pass
 
-@cli.group()
-def create():
-    """Create a new container for an AI agent"""
+@cli.group("app")
+def app_group():
+    """Manage AI agent applications"""
     pass
 
-@create.command()
-@click.argument("container_name", default="")
+@app_group.command("create")
+@click.argument("name", required=False)
 @click.option("--agent-type", default="langchain", help="AI agent type")
 @click.option("--env-file", default=".env", help="Path to the .env file")
-def container(container_name, agent_type, env_file):
-    if not container_name:
-        container_name = generate_container_name()
-    
-    click.echo(click.style(f"Creating container: {container_name}", fg="yellow"))
-    
-    if click.confirm("Do you want to clean unused docker resources before building the container?"):
-        click.echo(click.style("Pruning system resources...", fg="yellow"))
-        prune_system()
+def create_command(name, agent_type, env_file):
+    """Create a new application for an AI agent"""
+    if not name:
+        name = generate_app_name()
+
+    click.echo(click.style(f"Creating app: {name}", fg="yellow"))
+
+    if click.confirm("Do you want to clean unused docker resources before building the app?"):
+        with click.progressbar(length=4, label="Pruning system resources") as bar:
+            prune_system(bar)
         click.echo(click.style("System resources pruned successfully!", fg="green"))
-    
-    create_container(container_name, agent_type, env_file)
-    click.echo(click.style(f"Container '{container_name}' created successfully!", fg="green"))
 
-@cli.command()
-def run():
-    """Run an AI agent container"""
-    containers = list_containers()
-    if not containers:
-        click.echo(click.style("No containers found.", fg="red"))
+    create_app(name, agent_type, env_file)
+    click.echo(click.style(f"App '{name}' created successfully!", fg="green"))
+
+@app_group.command("run")
+@click.argument("name", required=False)
+def run_command(name):
+    """Run an AI agent application"""
+    apps = list_apps(prefix="bam")
+    if not apps:
+        click.echo(click.style("No apps found.", fg="red"))
         return
-    
-    click.echo(click.style("Available containers:", fg="yellow"))
-    for index, container in enumerate(containers, start=1):
-        click.echo(f"{index}. {container.name}")
-    
-    choice = click.prompt("Enter the number of the container to run", type=int)
-    if choice < 1 or choice > len(containers):
-        click.echo(click.style("Invalid choice.", fg="red"))
-        return
-    
-    container_name = containers[choice - 1].name
-    click.echo(click.style(f"Starting container: {container_name}", fg="yellow"))
+
+    click.echo(click.style("Available apps:", fg="yellow"))
+    for index, app in enumerate(apps, start=1):
+        click.echo(f"{index}. {app.name}")
+
+    if not name:
+        choice = click.prompt("Please select the app to run", type=int)
+        if choice < 1 or choice > len(apps):
+            click.echo(click.style("Invalid choice.", fg="red"))
+            return
+        name = apps[choice - 1].name
+
+    click.echo(click.style(r"""
+       ____                  
+      |  _ \                 
+      | |_) | __ _ _ __ ___  
+      |  _ < / _` | '_ ` _ \ 
+      | |_) | (_| | | | | | |
+      |____/ \__,_|_| |_| |_|
+                              
+    """, fg="bright_yellow"))
+    click.echo(click.style(f"🚀 Running app: {name}", fg="bright_blue"))
+
     try:
-        run_container(container_name)
-        click.echo(click.style(f"Container '{container_name}' exited.", fg="green"))
+        run_app(name)
+        click.echo(click.style(f"App '{name}' exited.", fg="green"))
     except docker.errors.APIError as e:
-        click.echo(click.style(f"Error running container: {str(e)}", fg="red"))
-
-@cli.command()
-def dashboard():
-    """Launch the Streamlit dashboard"""
-    setup_streamlit_dashboard()
-    click.echo(click.style("Streamlit dashboard launched successfully!", fg="green"))
-
-@cli.command()
-def metrics():
-    """Set up metrics for the Bam CLI application"""
-    setup_metrics()
-    click.echo(click.style("Metrics set up successfully!", fg="green"))
-
-@cli.command()
-def prometheus():
-    """Set up Prometheus metrics for the Bam CLI application"""
-    setup_prometheus()
-    click.echo(click.style("Prometheus metrics set up successfully!", fg="green"))
-
-@cli.command()
-def logging():
-    """Set up logging for the Bam CLI application"""
-    setup_logging()
-    click.echo(click.style("Logging set up successfully!", fg="green"))
+        click.echo(click.style(f"Error running app: {str(e)}", fg="red"))
 
 def main():
     cli()
