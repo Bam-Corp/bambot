@@ -9,7 +9,7 @@ def build_image(container_dir):
     image, _ = docker_client.images.build(path=container_dir, tag=f"{os.path.basename(container_dir)}:latest", dockerfile="Dockerfile")
     return image
 
-def create_docker_container(container_name, env_vars=None):
+def create_docker_container(container_name, project_dir, env_vars=None):
     """Create a Docker container for an AI agent"""
     docker_client = docker.from_env()
     container = docker_client.containers.create(
@@ -20,6 +20,7 @@ def create_docker_container(container_name, env_vars=None):
         tty=True,
         stdin_open=True,
         ports={'1337/tcp': ('127.0.0.1', 1337)},
+        volumes={project_dir: {'bind': '/app', 'mode': 'rw'}},
     )
     return container
 
