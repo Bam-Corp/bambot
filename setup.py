@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="bambot",
-    version="0.4.3",
+    version="0.4.4",
     author="Bam Corp",
     author_email="spencer@bam.bot",
     description="Containers for AI agents",
