@@ -9,13 +9,13 @@ from contextlib import contextmanager
 
 
 def generate_app_name():
-    prefix = "bam"
-    adjectives = ["brave", "clever", "friendly", "gentle", "kind", "lucky", "silly", "witty"]
-    nouns = ["panda", "tiger", "lion", "eagle", "owl", "dolphin", "turtle", "penguin", "koala", "kangaroo"]
-    adjective = random.choice(adjectives)
-    noun = random.choice(nouns)
-    number = ''.join(random.choices(string.digits, k=4))
-    return f"{prefix}-{adjective}-{noun}-{number}"
+    # Simplified structure with less verbosity
+    prefix = "bambot"
+    # Combine adjectives and nouns for more combinations with fewer parts
+    descriptors = ["cool", "smart", "super", "zap", "zip", "jet", "jam", "pod"]
+    # Generate a two-digit number to reduce length but maintain uniqueness
+    number = random.choices(string.digits, k=2)
+    return f"{prefix}-{random.choice(descriptors)}-{'' .join(number)}"
 
 def setup_logging():
     """Set up colored logging for better visual feedback"""
