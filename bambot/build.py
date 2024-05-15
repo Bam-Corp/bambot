@@ -12,7 +12,21 @@ def build_project():
     with contextmanager_spinner(f"Building Docker image for '{container_name}'...") as spinner:
         try:
             docker_client = docker.from_env()
-            image, _ = docker_client.images.build(path=project_dir, tag=f"{container_name}:latest", dockerfile="Dockerfile")
+            response = docker_client.api.build(
+                path=project_dir, 
+                tag=f"{os.path.basename(project_dir)}:latest", 
+                dockerfile="Dockerfile", 
+                rm=True,
+                decode=True
+            )
+
+            # Process and print build logs as they arrive
+            for output in response:
+                if 'stream' in output:
+                    print(output['stream'].strip())
+                if 'error' in output:
+                    echo_error(f"Error during build: {output['errorDetail']['message']}")
+                    break
             spinner.stop()
             echo_success("Docker image built successfully!")
 
@@ -20,7 +34,6 @@ def build_project():
             container = docker_client.containers.create(
                 f"{container_name}:latest",
                 name=container_name,
-                detach=True,
                 tty=True,
                 stdin_open=True,
                 ports={'1337/tcp': ('127.0.0.1', 1337)},
