@@ -4,6 +4,8 @@ from colorama import Fore, Style
 from flask import Flask, render_template_string, jsonify, request
 from flask_cors import CORS
 import datetime
+from dotenv import load_dotenv
+load_dotenv()
 
 from agent_runner import Agent
 
