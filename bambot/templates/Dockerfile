@@ -11,8 +11,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy over project files
 COPY . .
 
-# Run the application
-CMD ["python", "server.py"]
-
 # Expose server port
 EXPOSE 1337
+
+# Run the application
+CMD ["python", "server.py"]
