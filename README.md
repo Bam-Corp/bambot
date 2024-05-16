@@ -1,7 +1,8 @@
 # Bam
 
-[![PyPI version](https://badge.fury.io/py/bam.svg)](https://badge.fury.io/py/bam)
+[![PyPI version](https://badge.fury.io/py/bam.svg)](https://badge.fury.io/py/bambot)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Downloads](https://static.pepy.tech/badge/bambot)](https://pepy.tech/project/bambot)
 
 Bam is a lightweight and easy-to-use command-line interface (CLI) tool for creating and running AI agent containers. It is currently Docker-based.
 
